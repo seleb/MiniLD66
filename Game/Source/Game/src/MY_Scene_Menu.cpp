@@ -23,6 +23,7 @@ MY_Scene_Menu::MY_Scene_Menu(Game * _game) :
 	TextLabel * label4 = new TextLabel(uiLayer->world, font, textShader);
 	TextLabel * label5 = new TextLabel(uiLayer->world, font, textShader);
 	TextLabel * label6 = new TextLabel(uiLayer->world, font, textShader);
+	TextLabel * label7 = new TextLabel(uiLayer->world, font, textShader);
 
 	// set the text on the labels
 	label1->setText("Box2D Test Scene");
@@ -31,6 +32,7 @@ MY_Scene_Menu::MY_Scene_Menu(Game * _game) :
 	label4->setText("Screen Shader Test Scene");
 	label5->setText("VR Test Scene");
 	label6->setText("Quit Game");
+	label7->setText("Play Game");
 
 	// make the labels' background visible (by default both the scene's clear colour and the text colour will be black)
 	label1->setBackgroundColour(1,1,1,1);
@@ -39,6 +41,7 @@ MY_Scene_Menu::MY_Scene_Menu(Game * _game) :
 	label4->setBackgroundColour(1,1,1,1);
 	label5->setBackgroundColour(1,1,1,1);
 	label6->setBackgroundColour(1,1,1,1);
+	label7->setBackgroundColour(1,1,1,1);
 
 	// make the labels clickable
 	label1->setMouseEnabled(true);
@@ -47,6 +50,7 @@ MY_Scene_Menu::MY_Scene_Menu(Game * _game) :
 	label4->setMouseEnabled(true);
 	label5->setMouseEnabled(true);
 	label6->setMouseEnabled(true);
+	label7->setMouseEnabled(true);
 
 	// add listeners to each label, making them buttons that take the player to different scenes
 	label1->eventManager->addEventListener("click", [&](sweet::Event * _event){
@@ -67,6 +71,9 @@ MY_Scene_Menu::MY_Scene_Menu(Game * _game) :
 	label6->eventManager->addEventListener("click", [&](sweet::Event * _event){
 		game->exit();
 	});
+	label7->eventManager->addEventListener("click", [&](sweet::Event * _event){
+		game->switchScene("main", false);
+	});
 
 
 	// add the labels to the layout
@@ -76,6 +83,7 @@ MY_Scene_Menu::MY_Scene_Menu(Game * _game) :
 	layout->addChild(label4);
 	layout->addChild(label5);
 	layout->addChild(label6);
+	layout->addChild(label7);
 
 	// add the layout to the uiLayer
 	uiLayer->addChild(layout);

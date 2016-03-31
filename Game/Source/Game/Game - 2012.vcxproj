@@ -17,6 +17,7 @@
     <ClCompile Include="src\MY_Scene_Base.cpp" />
     <ClCompile Include="src\MY_Scene_Box2D.cpp" />
     <ClCompile Include="src\MY_Scene_Bullet3D.cpp" />
+    <ClCompile Include="src\MY_Scene_Main.cpp" />
     <ClCompile Include="src\MY_Scene_Menu.cpp" />
     <ClCompile Include="src\MY_Scene_ScreenShaders.cpp" />
     <ClCompile Include="src\MY_Scene_SurfaceShaders.cpp" />
@@ -28,6 +29,7 @@
     <ClInclude Include="include\MY_Scene_Base.h" />
     <ClInclude Include="include\MY_Scene_Box2D.h" />
     <ClInclude Include="include\MY_Scene_Bullet3D.h" />
+    <ClInclude Include="include\MY_Scene_Main.h" />
     <ClInclude Include="include\MY_Scene_Menu.h" />
     <ClInclude Include="include\MY_Scene_ScreenShaders.h" />
     <ClInclude Include="include\MY_Scene_SurfaceShaders.h" />
