@@ -14,8 +14,15 @@
 #include <BulletMeshEntity.h>
 #include <BulletDebugDrawer.h>
 #include <NodeBulletBody.h>
+#include <Unit.h>
 
 #define SIZE 32
+
+MapCell::MapCell(glm::vec3 _position) :
+	position(_position),
+	unit(nullptr)
+{
+}
 
 MY_Scene_Main::MY_Scene_Main(Game * _game) :
 	MY_Scene_Base(_game),
@@ -75,7 +82,7 @@ MY_Scene_Main::MY_Scene_Main(Game * _game) :
 				}
 				cellPos.y *= s;
 			}
-			cellGrid[collider] = cellPos;
+			colliderToCell[collider] = MapCell(cellPos);
 
 
 			terrain->mesh->insertVertices(*collider->mesh);
@@ -149,11 +156,25 @@ void MY_Scene_Main::update(Step * _step){
 		}
 		selectedCell = me;
 		if(selectedCell != nullptr){
-			glm::vec3 cellPos = cellGrid[selectedCell];
 			cellHighlight->setVisible(true);
-			cellHighlight->firstParent()->translate(cellPos, false);
+			cellHighlight->firstParent()->translate(colliderToCell[selectedCell].position, false);
 
 			//selectedCell->setVisible(false);
+		}
+	}
+
+
+	if(selectedCell != nullptr){
+		if(mouse->leftJustPressed()){
+			MapCell & cell = colliderToCell[selectedCell];
+
+			if(cell.unit == nullptr){
+				Unit * unit = new Unit(0, cell.position, diffuseShader);
+				childTransform->addChild(unit);
+				units.push_back(unit);
+
+				cell.unit = unit;
+			}
 		}
 	}
 

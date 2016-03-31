@@ -1,3 +1,9 @@
 {
-  "assets": []
+  "assets": [
+  	{
+  		"type": "mesh",
+  		"id": "UNIT",
+  		"src": "unit.obj"
+  	}
+  ]
 }
