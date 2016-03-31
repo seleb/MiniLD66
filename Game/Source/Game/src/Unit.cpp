@@ -19,6 +19,8 @@ Unit::~Unit(){
 void Unit::update(Step * _step){
 	canAttack = true;
 
+	currentPosition = targetPosition;
+
 	firstParent()->translate(currentPosition, false);
 	MeshEntity::update(_step);
 }

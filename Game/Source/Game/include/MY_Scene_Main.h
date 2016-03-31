@@ -27,8 +27,14 @@ public:
 	std::vector<Shader *> shaders;
 	
 	DirectionalLight * sun;
+
 	NodeBulletBody * selectedCell;
-	std::map<NodeBulletBody *, MapCell> colliderToCell;
+	Unit * selectedUnit;
+	
+	std::map<NodeBulletBody *, MapCell *> colliderToCell;
+	std::map<std::pair<int, std::pair<int, int>>, MapCell *> positionToCell;
+	MapCell *& getCellFromPosition(glm::vec3 _position);
+
 
 	MeshEntity * cellHighlight;
 

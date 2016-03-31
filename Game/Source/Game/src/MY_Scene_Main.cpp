@@ -82,15 +82,22 @@ MY_Scene_Main::MY_Scene_Main(Game * _game) :
 				}
 				cellPos.y *= s;
 			}
-			colliderToCell[collider] = MapCell(cellPos);
-
+			colliderToCell[collider] = new MapCell(cellPos);
+			getCellFromPosition(cellPos) = colliderToCell[collider];
 
 			terrain->mesh->insertVertices(*collider->mesh);
 			collider->firstParent()->setVisible(false);
 		}
 	}
 
-
+	
+	units.push_back(new Unit(0, glm::vec3(1, 1, 3), diffuseShader));
+	units.push_back(new Unit(0, glm::vec3(2, 1, 3), diffuseShader));
+	units.push_back(new Unit(0, glm::vec3(3, 1, 4), diffuseShader));
+	for(Unit * u : units){
+		getCellFromPosition(u->currentPosition)->unit = u;
+		childTransform->addChild(u);
+	}
 
 	// CAMERA
 	gameCam = new OrthographicCamera(-SIZE, SIZE, -SIZE/2, SIZE/2, -1000, 1000);
@@ -119,6 +126,10 @@ MY_Scene_Main::~MY_Scene_Main(){
 	diffuseShader->decrementAndDelete();
 
 	delete bulletWorld;
+
+	for(auto m : colliderToCell){
+		delete m.second;
+	}
 }
 
 void MY_Scene_Main::update(Step * _step){
@@ -157,7 +168,7 @@ void MY_Scene_Main::update(Step * _step){
 		selectedCell = me;
 		if(selectedCell != nullptr){
 			cellHighlight->setVisible(true);
-			cellHighlight->firstParent()->translate(colliderToCell[selectedCell].position, false);
+			cellHighlight->firstParent()->translate(colliderToCell[selectedCell]->position, false);
 
 			//selectedCell->setVisible(false);
 		}
@@ -166,14 +177,15 @@ void MY_Scene_Main::update(Step * _step){
 
 	if(selectedCell != nullptr){
 		if(mouse->leftJustPressed()){
-			MapCell & cell = colliderToCell[selectedCell];
+			MapCell * cell = colliderToCell[selectedCell];
 
-			if(cell.unit == nullptr){
-				Unit * unit = new Unit(0, cell.position, diffuseShader);
-				childTransform->addChild(unit);
-				units.push_back(unit);
-
-				cell.unit = unit;
+			// select the unit in the cell
+			selectedUnit = cell->unit;
+		}else if(mouse->rightJustPressed()){
+			MapCell * cell = colliderToCell[selectedCell];
+			
+			if(selectedUnit != nullptr){
+				selectedUnit->targetPosition = cell->position;
 			}
 		}
 	}
@@ -187,6 +199,10 @@ void MY_Scene_Main::update(Step * _step){
 	sun->childTransform->lookAt(glm::vec3(0));
 
 	sun->setIntensities(glm::vec3(glm::min(1.f, glm::sin(t) + 1.f), (glm::sin(t+15)+1)*0.5f, (glm::sin(t*2 + 15)+1)*0.4f+0.1f));
+}
+
+MapCell *& MY_Scene_Main::getCellFromPosition(glm::vec3 _position){
+	return positionToCell[std::make_pair(_position.x, std::make_pair(_position.y, _position.z))];
 }
 
 void MY_Scene_Main::enableDebug(){
