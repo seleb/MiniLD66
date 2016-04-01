@@ -2,7 +2,12 @@
   "assets": [
   	{
   		"type": "mesh",
-  		"id": "UNIT",
+  		"id": "UNIT-GOOD",
+  		"src": "unit.obj"
+  	},
+  	{
+  		"type": "mesh",
+  		"id": "UNIT-BAD",
   		"src": "unit.obj"
   	},
   	{

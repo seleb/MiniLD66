@@ -18,6 +18,9 @@ public:
 
 class MY_Scene_Main : public MY_Scene_Base{
 public:
+	sweet::EventManager * eventManager;
+
+
 	Shader * screenSurfaceShader;
 	RenderSurface * screenSurface;
 	StandardFrameBuffer * screenFBO;
@@ -48,7 +51,7 @@ public:
 
 	OrthographicCamera * gameCam;
 	int camAngle;
-	std::vector<Unit *> units;
+	std::map<int, Unit *> units;
 
 	virtual void update(Step * _step) override;
 	virtual void render(sweet::MatrixStack * _matrixStack, RenderOptions * _renderOptions) override;
@@ -61,4 +64,8 @@ public:
 	virtual void enableDebug() override;
 	// overriden to remove physics debug drawing
 	virtual void disableDebug() override;
+
+	
+	void kill(Unit * _unit);
+	void kill(int _unitId);
 };

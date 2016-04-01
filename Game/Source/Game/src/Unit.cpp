@@ -8,7 +8,7 @@
 
 
 Unit::Unit(int _team, glm::vec3 _position, Shader * _shader) :
-	MeshEntity(MY_ResourceManager::globalAssets->getMesh("UNIT")->meshes.at(0), _shader),
+	MeshEntity(MY_ResourceManager::globalAssets->getMesh(_team == 0 ? "UNIT-GOOD" : "UNIT-BAD")->meshes.at(0), _shader),
 	currentPosition(_position),
 	targetPosition(_position),
 	team(_team),
@@ -25,7 +25,7 @@ Unit::Unit(int _team, glm::vec3 _position, Shader * _shader) :
 	});
 	childTransform->addChild(moveTimeout, false);
 
-	attackTimeout = new Timeout(0.2f, [this](sweet::Event * _event){
+	attackTimeout = new Timeout(5.f, [this](sweet::Event * _event){
 		canAttack = true;
 	});
 	childTransform->addChild(attackTimeout, false);

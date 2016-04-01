@@ -15,6 +15,8 @@ public:
 	// which team this unit is aligned with
 	int team;
 
+	int id;
+
 	float power;
 	bool canAttack;
 	bool canMove;

@@ -39,7 +39,8 @@ MY_Scene_Main::MY_Scene_Main(Game * _game) :
 	screenSurfaceShader(new Shader("assets/RenderSurface_1", false, true)),
 	screenSurface(new RenderSurface(screenSurfaceShader, true)),
 	screenFBO(new StandardFrameBuffer(true)),
-	sunTime(0)
+	sunTime(0),
+	eventManager(new sweet::EventManager())
 {
 	// memory management
 	screenSurface->incrementReferenceCount();
@@ -76,6 +77,10 @@ MY_Scene_Main::MY_Scene_Main(Game * _game) :
 
 	const TriMesh * const blockMesh = MY_ResourceManager::globalAssets->getMesh("BLOCK")->meshes.at(0);
 	const std::vector<TriMesh * > propsMeshes = MY_ResourceManager::globalAssets->getMesh("PROPS")->meshes;
+
+	TriMesh * unitMeshGood = MY_ResourceManager::globalAssets->getMesh("UNIT-GOOD")->meshes.at(0);
+	TriMesh * unitMeshBad = MY_ResourceManager::globalAssets->getMesh("UNIT-BAD")->meshes.at(0);
+	unitMeshBad->pushTexture2D(Scenario::defaultTexture->texture); // apply a texture to the baddie mesh to make it easier to debug for now
 
 	childTransform->addChild(terrain);
 	for(signed long int x = 0; x < SIZE; ++x){
@@ -122,8 +127,11 @@ MY_Scene_Main::MY_Scene_Main(Game * _game) :
 
 			// spawn unit here
 			if(sweet::NumberUtils::randomFloat() > 0.95f){
-				Unit * u = new Unit(0, cellPos, diffuseShader);
-				units.push_back(u);
+				bool baddie = sweet::NumberUtils::randomFloat() > 0.75;
+
+				Unit * u = new Unit(baddie, cellPos, diffuseShader);
+				u->id = units.size();
+				units[units.size()] = u;
 				cell->unit = u;
 				u->cell = cell;
 				childTransform->addChild(u);
@@ -151,6 +159,11 @@ MY_Scene_Main::MY_Scene_Main(Game * _game) :
 
 
 	bulletWorld->update(&sweet::step);
+
+
+	eventManager->addEventListener("kill", [this](sweet::Event * _event){
+		kill(_event->getIntData("unit"));
+	});
 }
 
 MY_Scene_Main::~MY_Scene_Main(){	
@@ -168,6 +181,8 @@ MY_Scene_Main::~MY_Scene_Main(){
 	screenSurface->decrementAndDelete();
 	screenSurfaceShader->decrementAndDelete();
 	screenFBO->decrementAndDelete();
+
+	delete eventManager;
 }
 
 void MY_Scene_Main::update(Step * _step){
@@ -262,7 +277,8 @@ void MY_Scene_Main::update(Step * _step){
 
 
 	// move units
-	for(Unit * u : units){
+	for(auto it : units){
+		Unit * u = it.second;
 		if(u->canMove){
 			glm::vec3 d = u->targetPosition - (u->currentPosition - glm::vec3(glm::mod(u->currentPosition,glm::vec3(1.f))));
 			if(glm::length(d) > FLT_EPSILON){
@@ -288,13 +304,26 @@ void MY_Scene_Main::update(Step * _step){
 						u->canMove = false;
 						break;
 					}else{
-						// path blocked, try the other route
-						if(glm::abs(d.x) > glm::abs(d.z)){
-							movement.z += glm::sign(d.z);
-							movement.x -= glm::sign(d.x);
+						// path blocked
+
+						if(u != targetCell->unit && u->team == 1 && u->canAttack){
+							// i'm a baddie, so just straight murder em
+							u->canAttack = false;
+							u->attackTimeout->restart();
+
+							sweet::Event * e = new sweet::Event("kill");
+							e->setIntData("unit", targetCell->unit->id);
+							eventManager->triggerEvent(e);
+							continue;
 						}else{
-							movement.x += glm::sign(d.x);
-							movement.z -= glm::sign(d.z);
+							//try the other route
+							if(glm::abs(d.x) > glm::abs(d.z)){
+								movement.z += glm::sign(d.z);
+								movement.x -= glm::sign(d.x);
+							}else{
+								movement.x += glm::sign(d.x);
+								movement.z -= glm::sign(d.z);
+							}
 						}
 						continue;
 					}
@@ -307,6 +336,7 @@ void MY_Scene_Main::update(Step * _step){
 		}
 	}
 
+	eventManager->update(_step);
 	MY_Scene_Base::update(_step);
 
 	// update light position to make it orbit around the scene
@@ -367,6 +397,24 @@ void MY_Scene_Main::render(sweet::MatrixStack * _matrixStack, RenderOptions * _r
 
 MapCell *& MY_Scene_Main::getCellFromPosition(glm::vec3 _position){
 	return positionToCell[std::make_pair(glm::floor(_position.x), glm::floor(_position.z))];
+}
+
+
+void MY_Scene_Main::kill(Unit * _unit){
+	for(auto u : units){
+		if(u.second == _unit){
+			kill(u.first);
+			break;
+		}
+	}
+}
+	
+void MY_Scene_Main::kill(int _unitId){
+	Unit * u = units.at(_unitId);
+	units.erase(_unitId);
+	u->cell->unit = nullptr;
+	u->firstParent()->firstParent()->removeChild(u->firstParent());
+	delete u->firstParent();
 }
 
 void MY_Scene_Main::enableDebug(){
