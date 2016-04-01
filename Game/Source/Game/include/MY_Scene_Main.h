@@ -33,6 +33,7 @@ public:
 
 	std::vector<Shader *> shaders;
 	
+	float sunTime;
 	DirectionalLight * sun;
 
 	NodeBulletBody * selectedCell;

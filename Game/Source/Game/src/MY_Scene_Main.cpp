@@ -37,7 +37,8 @@ MY_Scene_Main::MY_Scene_Main(Game * _game) :
 	camAngle(0),
 	screenSurfaceShader(new Shader("assets/RenderSurface_1", false, true)),
 	screenSurface(new RenderSurface(screenSurfaceShader, true)),
-	screenFBO(new StandardFrameBuffer(true))
+	screenFBO(new StandardFrameBuffer(true)),
+	sunTime(0)
 {
 	// Setup the debug drawer and add it to the scene
 	bulletWorld->world->setDebugDrawer(bulletDebugDrawer);
@@ -282,11 +283,11 @@ void MY_Scene_Main::update(Step * _step){
 
 	// update light position to make it orbit around the scene
 	float r = SIZE/2;
-	float t = _step->time*0.25f;
-	sun->firstParent()->translate(glm::vec3(sin(t) * r, 0, cos(t) * r) + glm::vec3(0, 3, 0), false);
+	sunTime += _step->deltaTime*0.25f;
+	sun->firstParent()->translate(glm::vec3(sin(sunTime) * r, 0, cos(sunTime) * r) + glm::vec3(0, 3, 0), false);
 	sun->childTransform->lookAt(glm::vec3(0));
 
-	sun->setIntensities(glm::vec3(glm::min(1.f, glm::sin(t) + 1.f), (glm::sin(t+15)+1)*0.5f, (glm::sin(t*2 + 15)+1)*0.4f+0.1f));
+	sun->setIntensities(glm::vec3(glm::min(1.f, glm::sin(sunTime) + 1.f), (glm::sin(sunTime+15)+1)*0.5f, (glm::sin(sunTime*2 + 15)+1)*0.4f+0.1f));
 
 
 
