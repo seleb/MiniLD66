@@ -34,7 +34,7 @@ Unit::Unit(int _team, glm::vec3 _position, Shader * _shader) :
 
 	waitTimeout = new Timeout(2.5f, [this](sweet::Event * _event){
 		if(team == 0){
-			targetPosition = glm::vec3(sweet::NumberUtils::randomInt(-SIZE/2+1, SIZE/2-2), 0, sweet::NumberUtils::randomInt(-SIZE/2+1, SIZE/2-2));
+			targetPosition = glm::vec3(sweet::NumberUtils::randomInt(-MY_Scene_Main::SIZE/2+1, MY_Scene_Main::SIZE/2-2), 0, sweet::NumberUtils::randomInt(-MY_Scene_Main::SIZE/2+1, MY_Scene_Main::SIZE/2-2));
 		}else{
 			targetPosition = MY_Scene_Main::getRandomUnitPosition();
 		}wanderTimeout->targetSeconds = sweet::NumberUtils::randomFloat(1.5, 10.f);

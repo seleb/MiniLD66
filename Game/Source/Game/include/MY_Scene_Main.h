@@ -7,7 +7,7 @@ class BulletDebugDrawer;
 class DirectionalLight;
 class Unit;
 
-#define SIZE 16
+#define START_SIZE 6
 
 class MapCell : public Node{
 public:
@@ -18,6 +18,8 @@ public:
 
 class MY_Scene_Main : public MY_Scene_Base{
 public:
+	static int SIZE;
+
 	sweet::EventManager * eventManager;
 
 
@@ -44,6 +46,7 @@ public:
 
 	float numBaddies, numUnits, numFriendlies;
 	bool gameOver;
+	bool gameWon;
 	
 	std::map<NodeBulletBody *, MapCell *> colliderToCell;
 	std::map<std::pair<int, int>, MapCell *> positionToCell;

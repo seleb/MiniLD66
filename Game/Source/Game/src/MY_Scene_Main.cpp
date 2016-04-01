@@ -32,6 +32,7 @@ MapCell::MapCell(glm::vec3 _position) :
 }
 
 std::map<int, Unit *> MY_Scene_Main::units;
+int MY_Scene_Main::SIZE = START_SIZE;
 
 MY_Scene_Main::MY_Scene_Main(Game * _game) :
 	MY_Scene_Base(_game),
@@ -49,7 +50,8 @@ MY_Scene_Main::MY_Scene_Main(Game * _game) :
 	numUnits(0),
 	numBaddies(0),
 	numFriendlies(0),
-	gameOver(false)
+	gameOver(false),
+	gameWon(false)
 {
 	// memory management
 	screenSurface->incrementReferenceCount();
@@ -187,14 +189,21 @@ MY_Scene_Main::MY_Scene_Main(Game * _game) :
 	vl->setMarginBottom(0.05f);
 	vl->marginLeft.setRationalSize(1.f, &vl->marginBottom);
 	
+	TextLabel * lblLvl = new TextLabel(uiLayer->world, font, textShader);
+	vl->addChild(lblLvl);
+	lblLvl->setText("LVL " + std::to_string((SIZE-START_SIZE)/2));
+	lblLvl->setRenderMode(kTEXTURE);
+
 	TextLabelControlled * lblBaddies = new TextLabelControlled(&numBaddies, 0, numUnits, uiLayer->world, font, textShader);
 	vl->addChild(lblBaddies);
 	lblBaddies->prefix = "Sleeper Agents: ";
 	lblBaddies->suffix = " / " + std::to_string((int)numBaddies);
+	lblBaddies->setRenderMode(kTEXTURE);
 	TextLabelControlled * lblFriendlies = new TextLabelControlled(&numFriendlies, 0, numUnits, uiLayer->world, font, textShader);
 	vl->addChild(lblFriendlies);
 	lblFriendlies->prefix = "Civilians: ";
 	lblFriendlies->suffix = " / " + std::to_string((int)numFriendlies);
+	lblFriendlies->setRenderMode(kTEXTURE);
 
 	eventManager->addEventListener("kill", [this](sweet::Event * _event){
 		kill(_event->getIntData("unit"));
@@ -248,7 +257,6 @@ MY_Scene_Main::~MY_Scene_Main(){
 	delete eventManager;
 
 	MY_ResourceManager::globalAssets->getAudio("DEATH")->sound->parents.clear();
-	units.clear();
 }
 
 void MY_Scene_Main::update(Step * _step){
@@ -258,25 +266,34 @@ void MY_Scene_Main::update(Step * _step){
 	// check for win/lose
 	if(!gameOver){
 		if(numBaddies == 0){
-			TextLabel * win = new TextLabel(uiLayer->world, MY_ResourceManager::globalAssets->getFont("FONT-BIG")->font, textShader);
-			uiLayer->addChild(win);
-			win->setRationalHeight(1.f, uiLayer);
-			win->setRationalWidth(1.f, uiLayer);
-			win->horizontalAlignment = kCENTER;
-			win->verticalAlignment = kMIDDLE;
-			win->setText("YOU WIN");
+			gameWon = true;
 			gameOver = true;
-			fadeOutTimer->start();
+		}if(numFriendlies == 0){
+			gameWon = false;
+			gameOver = true;
 		}
-		if(numFriendlies == 0){
-			TextLabel * lose = new TextLabel(uiLayer->world, MY_ResourceManager::globalAssets->getFont("FONT-BIG")->font, textShader);
-			uiLayer->addChild(lose);
-			lose->setRationalHeight(1.f, uiLayer);
-			lose->setRationalWidth(1.f, uiLayer);
-			lose->horizontalAlignment = kCENTER;
-			lose->verticalAlignment = kMIDDLE;
-			lose->setText("YOU LOSE");
-			gameOver = true;
+
+		if(gameOver){
+			VerticalLinearLayout * vl = new VerticalLinearLayout(uiLayer->world);
+			uiLayer->addChild(vl);
+			vl->setRationalHeight(1.f, uiLayer);
+			vl->setRationalWidth(1.f, uiLayer);
+			vl->horizontalAlignment = kCENTER;
+			vl->verticalAlignment = kMIDDLE;
+
+			TextLabel * wonLost = new TextLabel(uiLayer->world, MY_ResourceManager::globalAssets->getFont("FONT-BIG")->font, textShader);
+			vl->addChild(wonLost);
+			wonLost->setText(gameWon ? "YOU WON" : "YOU LOST");
+			wonLost->setRenderMode(kTEXTURE);
+
+			TextLabel * pressEnter = new TextLabel(uiLayer->world, font, textShader);
+			vl->addChild(pressEnter);
+
+			std::stringstream ss;
+			ss << "Press * ENTER * to " << (gameWon ? " Continue to LVL " +std::to_string((SIZE-START_SIZE)/2 + 1) : " Retry");
+			pressEnter->setText(ss.str());
+			pressEnter->setRenderMode(kTEXTURE);
+
 			fadeOutTimer->start();
 		}
 	}
@@ -297,6 +314,19 @@ void MY_Scene_Main::update(Step * _step){
 			gameCam->yaw -= 360.f;
 		}
 	}
+
+	if(gameOver && keyboard->keyJustDown(GLFW_KEY_ENTER)){
+		units.clear();
+		if(gameWon){
+			SIZE += 2;
+		}
+
+		std::stringstream ss;
+		ss << "game" << _step->lastTimestamp;
+		game->scenes[ss.str()] = new MY_Scene_Main(game);
+		game->switchScene(ss.str(), true);
+	}
+
 	gameCam->yaw += ((camAngle/4.f*360.f + 45.f) - gameCam->yaw) * 0.1f;
 
 
@@ -375,68 +405,71 @@ void MY_Scene_Main::update(Step * _step){
 
 
 	// move units
-	for(auto it : units){
-		Unit * u = it.second;
-		if(u->canMove){
-			glm::vec3 d = u->targetPosition - (u->currentPosition - glm::vec3(glm::mod(u->currentPosition,glm::vec3(1.f))));
-			if(glm::length(d) > FLT_EPSILON){
-				glm::vec3 movement(0);
-				if(glm::abs(d.x) > glm::abs(d.z)){
-					movement.x += glm::sign(d.x);
-				}else{
-					movement.z += glm::sign(d.z);
-				}
-			
-				unsigned long int count = 0;
-				do{
-					glm::vec3 newPos = u->currentPosition + movement/* * 0.05f*/;
-					MapCell * targetCell = getCellFromPosition(newPos);
-
-					if(targetCell->unit == nullptr || targetCell->unit == u){
-						u->cell->unit = nullptr;
-						u->currentPosition = newPos;
-						u->currentPosition.y = targetCell->position.y;
-						targetCell->unit = u;
-						u->cell = targetCell;
-						u->moveTimeout->restart();
-						u->canMove = false;
-						break;
+	if(!gameOver){
+		for(auto it : units){
+			Unit * u = it.second;
+			if(u->canMove){
+				glm::vec3 d = u->targetPosition - (u->currentPosition - glm::vec3(glm::mod(u->currentPosition,glm::vec3(1.f))));
+				if(glm::length(d) > FLT_EPSILON){
+					glm::vec3 movement(0);
+					if(glm::abs(d.x) > glm::abs(d.z)){
+						movement.x += glm::sign(d.x);
 					}else{
-						// path blocked
-
-						if(
-							u != targetCell->unit // don't kill yourself
-							&& (u->team == 1 || u == selectedUnit)// you're a baddie OR you're the selected unit
-							&& targetCell->unit != selectedUnit // selected unit is invincible
-						){
-							// just straight murder em
-							sweet::Event * e = new sweet::Event("kill");
-							e->setIntData("unit", targetCell->unit->id);
-							eventManager->triggerEvent(e);
-							u->killTimeout->restart();
-							continue;
-						}else{
-							//try the other route
-							if(glm::abs(d.x) > glm::abs(d.z)){
-								movement.z += glm::sign(d.z);
-								movement.x -= glm::sign(d.x);
-							}else{
-								movement.x += glm::sign(d.x);
-								movement.z -= glm::sign(d.z);
-							}
-						}
-						continue;
+						movement.z += glm::sign(d.z);
 					}
-				}while(++count <= 1);
+			
+					unsigned long int count = 0;
+					do{
+						glm::vec3 newPos = u->currentPosition + movement/* * 0.05f*/;
+						MapCell * targetCell = getCellFromPosition(newPos);
+
+						if(targetCell->unit == nullptr || targetCell->unit == u){
+							u->cell->unit = nullptr;
+							u->currentPosition = newPos;
+							u->currentPosition.y = targetCell->position.y;
+							targetCell->unit = u;
+							u->cell = targetCell;
+							u->moveTimeout->restart();
+							u->canMove = false;
+							break;
+						}else{
+							// path blocked
+
+							if(
+								u != targetCell->unit // don't kill yourself
+								&& (u->team == 1 || u == selectedUnit)// you're a baddie OR you're the selected unit
+								&& targetCell->unit != selectedUnit // selected unit is invincible
+							){
+								// just straight murder em
+								sweet::Event * e = new sweet::Event("kill");
+								e->setIntData("unit", targetCell->unit->id);
+								eventManager->triggerEvent(e);
+								u->killTimeout->restart();
+								continue;
+							}else{
+								//try the other route
+								if(glm::abs(d.x) > glm::abs(d.z)){
+									movement.z += glm::sign(d.z);
+									movement.x -= glm::sign(d.x);
+								}else{
+									movement.x += glm::sign(d.x);
+									movement.z -= glm::sign(d.z);
+								}
+							}
+							continue;
+						}
+					}while(++count <= 1);
 				
-				if(movement.x == 0 && movement.z == 0){
-					// path fully blocked
+					if(movement.x == 0 && movement.z == 0){
+						// path fully blocked
+					}
 				}
 			}
 		}
+
+		eventManager->update(_step);
 	}
 
-	eventManager->update(_step);
 	MY_Scene_Base::update(_step);
 
 	// update light position to make it orbit around the scene

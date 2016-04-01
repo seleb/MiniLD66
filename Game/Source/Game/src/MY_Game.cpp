@@ -28,4 +28,6 @@ void MY_Game::addSplashes(){
 	//addSplash(new Scene_Splash(this, MY_ResourceManager::globalAssets->getTexture("DEFAULT")->texture, MY_ResourceManager::globalAssets->getAudio("DEFAULT")->sound));
 
 	MY_ResourceManager::globalAssets->getAudio("BGM")->sound->play(true);
+
+	sweet::setCursorMode(GLFW_CURSOR_HIDDEN);
 }

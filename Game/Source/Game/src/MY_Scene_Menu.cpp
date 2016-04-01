@@ -29,6 +29,7 @@ MY_Scene_Menu::MY_Scene_Menu(Game * _game) :
 	readMe->setText(sweet::FileUtils::readFile("readme.txt"));
 
 	uiLayer->invalidateLayout();
+	uiLayer->addMouseIndicator();
 }
 
 void MY_Scene_Menu::update(Step * _step){
