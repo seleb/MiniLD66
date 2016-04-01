@@ -143,9 +143,9 @@ MY_Scene_Main::MY_Scene_Main(Game * _game) :
 				(units.size() < 2 && x == SIZE-1 && y > SIZE-3)
 			){
 				bool baddie = numFriendlies - sweet::NumberUtils::randomFloat(0, SIZE) > numBaddies;
-				if(units.size() < 3){
+				if(units.size() < 2){
 					baddie = false;
-				}else if(units.size() == 3){
+				}else if(units.size() == 2){
 					baddie = true;
 				}
 
@@ -203,12 +203,12 @@ MY_Scene_Main::MY_Scene_Main(Game * _game) :
 
 	TextLabelControlled * lblBaddies = new TextLabelControlled(&numBaddies, 0, numUnits, uiLayer->world, font, textShader);
 	vl->addChild(lblBaddies);
-	lblBaddies->prefix = "Sleeper Agents: ";
+	lblBaddies->prefix = "SLEEPER AGENTS: ";
 	lblBaddies->suffix = " / " + std::to_string((int)numBaddies);
 	lblBaddies->setRenderMode(kTEXTURE);
 	TextLabelControlled * lblFriendlies = new TextLabelControlled(&numFriendlies, 0, numUnits, uiLayer->world, font, textShader);
 	vl->addChild(lblFriendlies);
-	lblFriendlies->prefix = "Civilians: ";
+	lblFriendlies->prefix = "CIVILIANS: ";
 	lblFriendlies->suffix = " / " + std::to_string((int)numFriendlies);
 	lblFriendlies->setRenderMode(kTEXTURE);
 
@@ -299,7 +299,7 @@ void MY_Scene_Main::update(Step * _step){
 			vl->addChild(pressEnter);
 
 			std::stringstream ss;
-			ss << "Press * ENTER * to " << (gameWon ? " Continue to LVL " +std::to_string((SIZE-START_SIZE)/2 + 1) : " Retry");
+			ss << "PRESS * ENTER * TO " << (gameWon ? " CONTINUE TO LVL " +std::to_string((SIZE-START_SIZE)/2 + 1) : " RETRY");
 			pressEnter->setText(ss.str());
 			pressEnter->setRenderMode(kTEXTURE);
 
