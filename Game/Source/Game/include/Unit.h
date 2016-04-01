@@ -4,9 +4,12 @@
 
 class MapCell;
 class Timeout;
+class ShaderComponentTint;
 
 class Unit : public MeshEntity{
 public:
+	ShaderComponentTint * tint;
+	float killTime;
 	glm::vec3 currentPosition;
 	glm::vec3 targetPosition;
 
@@ -20,7 +23,7 @@ public:
 	float power;
 	bool canMove;
 
-	Timeout * moveTimeout, * wanderTimeout, * waitTimeout;
+	Timeout * moveTimeout, * wanderTimeout, * waitTimeout, * killTimeout;
 
 	Unit(int _team, glm::vec3 _position, Shader * _shader);
 	~Unit();
@@ -41,4 +44,5 @@ public:
 
 
 	virtual void update(Step * _step);
+	virtual void render(sweet::MatrixStack * _matrixStack, RenderOptions * _renderOptions) override;
 };

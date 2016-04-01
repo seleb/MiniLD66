@@ -34,11 +34,27 @@
   		"id": "BLOCK",
   		"src": "block.obj"
   	},
-  	{
-  		"type": "texture",
-  		"id": "HIGHLIGHT",
-  		"src": "highlight.png",
-  		"generateMipmaps": false
-  	}
+    {
+      "type": "texture",
+      "id": "HIGHLIGHT",
+      "src": "highlight.png",
+      "generateMipmaps": false
+    },
+
+    {
+      "type": "audio",
+      "id": "BGM",
+      "src": "DirtyFilthy.ogg",
+      "category": "music",
+      "positional": false,
+      "stream": false
+    },{
+      "type": "audio",
+      "id": "DEATH",
+      "src": "Dickered.ogg",
+      "category": "sfx",
+      "positional": true,
+      "stream": false
+    }
   ]
 }

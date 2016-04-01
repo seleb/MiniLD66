@@ -22,8 +22,10 @@ MY_Game::~MY_Game(){}
 
 void MY_Game::addSplashes(){
 	// add default splashes
-	Game::addSplashes();
+	//Game::addSplashes();
 
 	// add custom splashes
-	addSplash(new Scene_Splash(this, MY_ResourceManager::globalAssets->getTexture("DEFAULT")->texture, MY_ResourceManager::globalAssets->getAudio("DEFAULT")->sound));
+	//addSplash(new Scene_Splash(this, MY_ResourceManager::globalAssets->getTexture("DEFAULT")->texture, MY_ResourceManager::globalAssets->getAudio("DEFAULT")->sound));
+
+	MY_ResourceManager::globalAssets->getAudio("BGM")->sound->play(true);
 }

@@ -5,6 +5,7 @@
 #include <shader/ShaderComponentMVP.h>
 #include <shader/ShaderComponentTexture.h>
 #include <shader/ShaderComponentDiffuse.h>
+#include <shader/ShaderComponentTint.h>
 
 #include <MeshFactory.h>
 
@@ -58,9 +59,11 @@ MY_Scene_Main::MY_Scene_Main(Game * _game) :
 	childTransform->addChild(bulletDebugDrawer, false);
 	bulletDebugDrawer->setDebugMode(btIDebugDraw::DBG_NoDebug);
 
+	ShaderComponentTint * tint;
 	diffuseShader->addComponent(new ShaderComponentMVP(diffuseShader));
 	diffuseShader->addComponent(new ShaderComponentDiffuse(diffuseShader, false));
 	diffuseShader->addComponent(new ShaderComponentTexture(diffuseShader));
+	diffuseShader->addComponent(tint = new ShaderComponentTint(diffuseShader));
 	diffuseShader->compileShader();
 	diffuseShader->name = "Scene: Main, Shader: diffuse";
 	diffuseShader->incrementReferenceCount();
@@ -86,7 +89,7 @@ MY_Scene_Main::MY_Scene_Main(Game * _game) :
 
 	TriMesh * unitMeshGood = MY_ResourceManager::globalAssets->getMesh("UNIT-GOOD")->meshes.at(0);
 	TriMesh * unitMeshBad = MY_ResourceManager::globalAssets->getMesh("UNIT-BAD")->meshes.at(0);
-	unitMeshBad->pushTexture2D(Scenario::defaultTexture->texture); // apply a texture to the baddie mesh to make it easier to debug for now
+	//unitMeshBad->pushTexture2D(Scenario::defaultTexture->texture); // apply a texture to the baddie mesh to make it easier to debug for now
 
 	childTransform->addChild(terrain);
 	for(signed long int x = 0; x < SIZE; ++x){
@@ -144,6 +147,7 @@ MY_Scene_Main::MY_Scene_Main(Game * _game) :
 
 				Unit * u = new Unit(baddie, cellPos, diffuseShader);
 				u->id = units.size();
+				u->tint = tint;
 				units[units.size()] = u;
 				cell->unit = u;
 				u->cell = cell;
@@ -240,9 +244,14 @@ MY_Scene_Main::~MY_Scene_Main(){
 	screenFBO->decrementAndDelete();
 
 	delete eventManager;
+
+	MY_ResourceManager::globalAssets->getAudio("DEATH")->sound->parents.clear();
 }
 
 void MY_Scene_Main::update(Step * _step){
+	OpenAL_Sound::setListener(activeCamera);
+
+
 	// check for win/lose
 	if(!gameOver){
 		if(numBaddies == 0){
@@ -347,6 +356,7 @@ void MY_Scene_Main::update(Step * _step){
 				selectedUnit->setShader(baseShader, false);
 				selectedUnit->waitTimeout->stop();
 				selectedUnit->wanderTimeout->stop();
+				selectedUnit->targetPosition = selectedUnit->currentPosition;
 			}
 		}else if(mouse->rightJustPressed()){
 
@@ -400,6 +410,7 @@ void MY_Scene_Main::update(Step * _step){
 							sweet::Event * e = new sweet::Event("kill");
 							e->setIntData("unit", targetCell->unit->id);
 							eventManager->triggerEvent(e);
+							u->killTimeout->restart();
 							continue;
 						}else{
 							//try the other route
@@ -498,10 +509,10 @@ void MY_Scene_Main::kill(Unit * _unit){
 void MY_Scene_Main::kill(int _unitId){
 	auto it = units.find(_unitId);
 	if(it != units.end()){
+
 		Unit * u = it->second;
 		units.erase(_unitId);
 		u->cell->unit = nullptr;
-		u->firstParent()->firstParent()->removeChild(u->firstParent());
 		if(u == selectedUnit){
 			selectedUnit = nullptr;
 		}
@@ -512,7 +523,27 @@ void MY_Scene_Main::kill(int _unitId){
 			numFriendlies -= 1;
 		}
 
-		delete u->firstParent();
+		Timeout * deathTimer = new Timeout(1.f, [u](sweet::Event * _event){
+			u->firstParent()->firstParent()->removeChild(u->firstParent());
+			delete u->firstParent();
+		});
+		
+		float y = u->currentPosition.y;
+		deathTimer->eventManager->addEventListener("progress", [this, u, y](sweet::Event * _event){
+			float p = Easing::easeOutCubic(_event->getFloatData("progress"), y, 1.5f, 1);
+			u->targetPosition.y = u->currentPosition.y = p;
+		});
+
+		childTransform->addChild(deathTimer)->translate(u->childTransform->getWorldPos());
+		deathTimer->start();
+
+		
+		OpenAL_Sound * deathSound = MY_ResourceManager::globalAssets->getAudio("DEATH")->sound;
+		if(deathSound->parents.size() != 0){
+			deathSound->firstParent()->removeChild(deathSound);
+		}
+		deathTimer->firstParent()->addChild(deathSound, false);
+		deathSound->play(false);
 	}
 }
 
