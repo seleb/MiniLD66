@@ -41,6 +41,9 @@ public:
 
 	NodeBulletBody * selectedCell;
 	Unit * selectedUnit;
+
+	float numBaddies, numUnits, numFriendlies;
+	bool gameOver;
 	
 	std::map<NodeBulletBody *, MapCell *> colliderToCell;
 	std::map<std::pair<int, int>, MapCell *> positionToCell;

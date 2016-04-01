@@ -18,6 +18,7 @@
 #include <RenderOptions.h>
 #include <RenderSurface.h>
 #include <StandardFrameBuffer.h>
+#include <sweet/UI.h>
 
 class RenderSurface;
 class StandardFrameBuffer;
@@ -40,7 +41,11 @@ MY_Scene_Main::MY_Scene_Main(Game * _game) :
 	screenSurface(new RenderSurface(screenSurfaceShader, true)),
 	screenFBO(new StandardFrameBuffer(true)),
 	sunTime(0),
-	eventManager(new sweet::EventManager())
+	eventManager(new sweet::EventManager()),
+	numUnits(0),
+	numBaddies(0),
+	numFriendlies(0),
+	gameOver(false)
 {
 	// memory management
 	screenSurface->incrementReferenceCount();
@@ -129,6 +134,13 @@ MY_Scene_Main::MY_Scene_Main(Game * _game) :
 			if(sweet::NumberUtils::randomFloat() > 0.95f){
 				bool baddie = sweet::NumberUtils::randomFloat() > 0.75;
 
+				if(baddie){
+					++numBaddies;
+				}else{
+					++numFriendlies;
+				}
+				++numUnits;
+
 				Unit * u = new Unit(baddie, cellPos, diffuseShader);
 				u->id = units.size();
 				units[units.size()] = u;
@@ -161,6 +173,22 @@ MY_Scene_Main::MY_Scene_Main(Game * _game) :
 	bulletWorld->update(&sweet::step);
 
 
+	VerticalLinearLayout * vl = new VerticalLinearLayout(uiLayer->world);
+	uiLayer->addChild(vl);
+	vl->setRationalHeight(1.f, uiLayer);
+	vl->setRationalWidth(1.f, uiLayer);
+	vl->setMarginBottom(0.05f);
+	vl->marginLeft.setRationalSize(1.f, &vl->marginBottom);
+	
+	TextLabelControlled * lblBaddies = new TextLabelControlled(&numBaddies, 0, numUnits, uiLayer->world, font, textShader);
+	vl->addChild(lblBaddies);
+	lblBaddies->prefix = "Sleeper Agents: ";
+	lblBaddies->suffix = " / " + std::to_string((int)numBaddies);
+	TextLabelControlled * lblFriendlies = new TextLabelControlled(&numFriendlies, 0, numUnits, uiLayer->world, font, textShader);
+	vl->addChild(lblFriendlies);
+	lblFriendlies->prefix = "Civilians: ";
+	lblFriendlies->suffix = " / " + std::to_string((int)numFriendlies);
+
 	eventManager->addEventListener("kill", [this](sweet::Event * _event){
 		kill(_event->getIntData("unit"));
 	});
@@ -186,6 +214,32 @@ MY_Scene_Main::~MY_Scene_Main(){
 }
 
 void MY_Scene_Main::update(Step * _step){
+	// check for win/lose
+	if(!gameOver){
+		if(numBaddies == 0){
+			TextLabel * win = new TextLabel(uiLayer->world, MY_ResourceManager::globalAssets->getFont("FONT-BIG")->font, textShader);
+			uiLayer->addChild(win);
+			win->setRationalHeight(1.f, uiLayer);
+			win->setRationalWidth(1.f, uiLayer);
+			win->horizontalAlignment = kCENTER;
+			win->verticalAlignment = kMIDDLE;
+			win->setText("YOU WIN");
+			gameOver = true;
+		}
+		if(numFriendlies == 0){
+			TextLabel * lose = new TextLabel(uiLayer->world, MY_ResourceManager::globalAssets->getFont("FONT-BIG")->font, textShader);
+			uiLayer->addChild(lose);
+			lose->setRationalHeight(1.f, uiLayer);
+			lose->setRationalWidth(1.f, uiLayer);
+			lose->horizontalAlignment = kCENTER;
+			lose->verticalAlignment = kMIDDLE;
+			lose->setText("YOU LOSE");
+			gameOver = true;
+		}
+	}
+
+
+
 	// camera controls
 	if(keyboard->keyJustDown(GLFW_KEY_A) || keyboard->keyJustDown(GLFW_KEY_LEFT) || mouse->getMouseWheelDelta() < -FLT_EPSILON){
 		--camAngle;
@@ -309,15 +363,8 @@ void MY_Scene_Main::update(Step * _step){
 						if(
 							u != targetCell->unit // don't kill yourself
 							&& (u->team == 1 || u == selectedUnit)// you're a baddie OR you're the selected unit
-							&& u->canAttack // you can attack
 							&& targetCell->unit != selectedUnit // selected unit is invincible
 						){
-							// baddies have to wait a bit before they attack again
-							if(u == selectedUnit){
-								u->canAttack = false;
-								u->attackTimeout->restart();
-							}
-
 							// just straight murder em
 							sweet::Event * e = new sweet::Event("kill");
 							e->setIntData("unit", targetCell->unit->id);
@@ -427,6 +474,13 @@ void MY_Scene_Main::kill(int _unitId){
 		if(u == selectedUnit){
 			selectedUnit = nullptr;
 		}
+
+		if(u->team == 1){
+			numBaddies -= 1;
+		}else{
+			numFriendlies -= 1;
+		}
+
 		delete u->firstParent();
 	}
 }

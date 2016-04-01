@@ -18,10 +18,9 @@ public:
 	int id;
 
 	float power;
-	bool canAttack;
 	bool canMove;
 
-	Timeout * moveTimeout, * attackTimeout, * wanderTimeout, * waitTimeout;
+	Timeout * moveTimeout, * wanderTimeout, * waitTimeout;
 
 	Unit(int _team, glm::vec3 _position, Shader * _shader);
 	~Unit();

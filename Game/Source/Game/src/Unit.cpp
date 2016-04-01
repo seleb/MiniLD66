@@ -13,7 +13,6 @@ Unit::Unit(int _team, glm::vec3 _position, Shader * _shader) :
 	targetPosition(_position),
 	team(_team),
 	cell(nullptr),
-	canAttack(true),
 	canMove(true),
 	power(0)
 {
@@ -24,11 +23,6 @@ Unit::Unit(int _team, glm::vec3 _position, Shader * _shader) :
 		canMove = true;
 	});
 	childTransform->addChild(moveTimeout, false);
-
-	attackTimeout = new Timeout(5.f, [this](sweet::Event * _event){
-		canAttack = true;
-	});
-	childTransform->addChild(attackTimeout, false);
 
 	wanderTimeout = new Timeout(2.5f, [this](sweet::Event * _event){
 		waitTimeout->targetSeconds = sweet::NumberUtils::randomFloat(1.5, 10.f);
