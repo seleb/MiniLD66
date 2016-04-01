@@ -65,6 +65,8 @@ MY_Scene_Base::~MY_Scene_Base(){
 
 
 void MY_Scene_Base::update(Step * _step){
+
+
 	controller->update(_step);
 
 	// basic debugging controls

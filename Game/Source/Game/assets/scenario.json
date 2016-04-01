@@ -2,10 +2,17 @@
   "assets": [
     {
       "type": "font",
-      "id": "FONT",
+      "id": "FONT-SMALL",
       "src": "Fixedsys500c.ttf",
       "antiAliased": false,
       "size": "2%"
+    },
+    {
+      "type": "font",
+      "id": "FONT",
+      "src": "Fixedsys500c.ttf",
+      "antiAliased": false,
+      "size": "3%"
     },
     {
       "type": "font",

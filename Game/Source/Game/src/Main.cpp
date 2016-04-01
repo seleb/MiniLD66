@@ -27,7 +27,7 @@ int __stdcall WinMain(HINSTANCE inst, HINSTANCE prev, LPSTR cmd, int show){
 #endif
 	Log::THROW_ON_ERROR = true;
 
-	sweet::initialize("Game"); // initialize engine (argument is application title)
+	sweet::initialize("CODENAME: PAWN"); // initialize engine (argument is application title)
 
 	//OpenAL_Sound::masterGain = 0; // mute
 #ifdef _DEBUG

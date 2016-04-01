@@ -113,7 +113,7 @@ MY_Scene_Main::MY_Scene_Main(Game * _game) :
 
 			// lower terrain here
 			if(sweet::NumberUtils::randomFloat() > 0.75f){
-				float s = sweet::NumberUtils::randomInt(1, 2)*0.33f;
+				float s = sweet::NumberUtils::randomInt(1, 5)/12.f+0.5f;
 				for(auto & v : collider->mesh->vertices){
 					v.y *= s;
 				}
@@ -121,7 +121,7 @@ MY_Scene_Main::MY_Scene_Main(Game * _game) :
 			}
 			
 			// insert prop here
-			if(sweet::NumberUtils::randomFloat() > 0.9f){
+			if(sweet::NumberUtils::randomFloat() > 0.95f){
 				MeshInterface * prop = new TriMesh(true);
 				prop->insertVertices(*sweet::NumberUtils::randomItem(propsMeshes));
 				Transform t;
@@ -139,8 +139,15 @@ MY_Scene_Main::MY_Scene_Main(Game * _game) :
 
 
 			// spawn unit here
-			if(sweet::NumberUtils::randomFloat() > 0.95f){
-				bool baddie = sweet::NumberUtils::randomFloat() > 0.75;
+			if(sweet::NumberUtils::randomFloat() > 0.95f ||
+				(units.size() < 2 && x == SIZE-1 && y > SIZE-3)
+			){
+				bool baddie = numFriendlies - sweet::NumberUtils::randomFloat(0, SIZE) > numBaddies;
+				if(units.size() < 3){
+					baddie = false;
+				}else if(units.size() == 3){
+					baddie = true;
+				}
 
 				if(baddie){
 					++numBaddies;
@@ -226,14 +233,14 @@ MY_Scene_Main::MY_Scene_Main(Game * _game) :
 	childTransform->addChild(fadeInTimer);
 
 	fadeOutTimer = new Timeout(1.f, [this](sweet::Event * _event){
-		fade->setBackgroundColour(0,0,0, 0.5f);
+		fade->setBackgroundColour(gameWon?0:1.f,0,0, 0.5f);
 	});
 	fadeOutTimer->eventManager->addEventListener("start", [this](sweet::Event * _event){
 		fade->setBackgroundColour(0,0,0, 0);
 		fade->setVisible(true);
 	});
 	fadeOutTimer->eventManager->addEventListener("progress", [this](sweet::Event * _event){
-		fade->setBackgroundColour(0,0,0, Easing::easeInOutCubic(_event->getFloatData("progress"), 0, 0.5f, 1));
+		fade->setBackgroundColour(gameWon?0:1.f,0,0, Easing::easeInOutCubic(_event->getFloatData("progress"), 0, 0.5f, 1));
 	});
 	childTransform->addChild(fadeOutTimer);
 }
@@ -260,6 +267,8 @@ MY_Scene_Main::~MY_Scene_Main(){
 }
 
 void MY_Scene_Main::update(Step * _step){
+	textShader->setColor(1,1,1, 1.f);
+
 	OpenAL_Sound::setListener(activeCamera);
 
 
@@ -505,7 +514,7 @@ void MY_Scene_Main::update(Step * _step){
 }
 
 void MY_Scene_Main::render(sweet::MatrixStack * _matrixStack, RenderOptions * _renderOptions){
-	glm::vec3 v =sun->getIntensities() * 0.5f;
+	glm::vec3 v = sun->getIntensities() * 0.5f;
 	_renderOptions->setClearColour(v.x, v.y, v.z, 1);
 
 	// keep our screen framebuffer up-to-date with the current viewport
@@ -595,12 +604,14 @@ void MY_Scene_Main::disableDebug(){
 
 glm::vec3 MY_Scene_Main::getRandomUnitPosition(){
 	Unit * u;
+	unsigned long int i = 0;
 	do{
 		int i = sweet::NumberUtils::randomInt(0, units.size()-1);
 		auto t = units.begin();
 		std::advance( t, i );
 		u = t->second;
-	}while(u->team == 1);
+		++i;
+	}while(u->team == 1 && i == 10);
 
 	return u->currentPosition;
 }
