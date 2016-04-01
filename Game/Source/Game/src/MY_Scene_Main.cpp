@@ -224,7 +224,7 @@ void MY_Scene_Main::update(Step * _step){
 		selectedCell = me;
 		if(selectedCell != nullptr){
 			cellHighlight->setVisible(true);
-			cellHighlight->firstParent()->translate(colliderToCell[selectedCell]->position, false);
+			cellHighlight->firstParent()->translate(colliderToCell[selectedCell]->position + glm::vec3(0, 0.1, 0), false);
 
 			//selectedCell->setVisible(false);
 		}
