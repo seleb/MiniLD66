@@ -71,7 +71,7 @@ void MY_Scene_Base::update(Step * _step){
 
 	// basic debugging controls
 	if(keyboard->keyJustDown(GLFW_KEY_ESCAPE)){
-		// N/A
+		game->exit();
 	}if(keyboard->keyJustDown(GLFW_KEY_F11)){
 		game->toggleFullScreen();
 	}if(keyboard->keyJustDown(GLFW_KEY_1)){
