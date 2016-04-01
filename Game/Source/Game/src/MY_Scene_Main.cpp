@@ -15,6 +15,7 @@
 #include <BulletDebugDrawer.h>
 #include <NodeBulletBody.h>
 #include <Unit.h>
+#include <RenderOptions.h>
 
 #define SIZE 32
 
@@ -96,6 +97,7 @@ MY_Scene_Main::MY_Scene_Main(Game * _game) :
 	units.push_back(new Unit(0, glm::vec3(3, 1, 4), diffuseShader));
 	for(Unit * u : units){
 		getCellFromPosition(u->currentPosition)->unit = u;
+		u->cell = getCellFromPosition(u->currentPosition);
 		childTransform->addChild(u);
 	}
 
@@ -190,6 +192,49 @@ void MY_Scene_Main::update(Step * _step){
 		}
 	}
 
+
+
+	// move units
+	for(Unit * u : units){
+		if(u->canMove){
+			glm::vec3 d = u->targetPosition - (u->currentPosition - glm::vec3(glm::mod(u->currentPosition,glm::vec3(1.f))));
+			if(glm::length(d) > FLT_EPSILON){
+				glm::vec3 movement(0);
+				if(glm::abs(d.x) > glm::abs(d.z)){
+					movement.x += glm::sign(d.x);
+				}else{
+					movement.z += glm::sign(d.z);
+				}
+			
+				unsigned long int count = 0;
+				do{
+					glm::vec3 newPos = u->currentPosition + movement/* * 0.05f*/;
+					MapCell * targetCell = getCellFromPosition(newPos);
+
+					if(targetCell->unit == nullptr || targetCell->unit == u){
+						u->cell->unit = nullptr;
+						u->currentPosition = newPos;
+						u->currentPosition.y = targetCell->position.y;
+						targetCell->unit = u;
+						u->cell = targetCell;
+						u->moveTimeout->restart();
+						u->canMove = false;
+						break;
+					}else{
+						if(glm::abs(d.x) > glm::abs(d.z)){
+							movement.z += glm::sign(d.z);
+							movement.x -= glm::sign(d.x);
+						}else{
+							movement.x += glm::sign(d.x);
+							movement.z -= glm::sign(d.z);
+						}
+						continue;
+					}
+				}while(++count <= 1);
+			}
+		}
+	}
+
 	MY_Scene_Base::update(_step);
 
 	// update light position to make it orbit around the scene
@@ -201,8 +246,14 @@ void MY_Scene_Main::update(Step * _step){
 	sun->setIntensities(glm::vec3(glm::min(1.f, glm::sin(t) + 1.f), (glm::sin(t+15)+1)*0.5f, (glm::sin(t*2 + 15)+1)*0.4f+0.1f));
 }
 
+void MY_Scene_Main::render(sweet::MatrixStack * _matrixStack, RenderOptions * _renderOptions){
+	glm::vec3 v =sun->getIntensities();
+	_renderOptions->setClearColour(v.x, v.y, v.z, 1);
+	MY_Scene_Base::render(_matrixStack, _renderOptions);
+}
+
 MapCell *& MY_Scene_Main::getCellFromPosition(glm::vec3 _position){
-	return positionToCell[std::make_pair(_position.x, std::make_pair(_position.y, _position.z))];
+	return positionToCell[std::make_pair(glm::round(_position.x), glm::round(_position.z))];
 }
 
 void MY_Scene_Main::enableDebug(){

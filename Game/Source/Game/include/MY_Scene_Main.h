@@ -32,7 +32,7 @@ public:
 	Unit * selectedUnit;
 	
 	std::map<NodeBulletBody *, MapCell *> colliderToCell;
-	std::map<std::pair<int, std::pair<int, int>>, MapCell *> positionToCell;
+	std::map<std::pair<int, int>, MapCell *> positionToCell;
 	MapCell *& getCellFromPosition(glm::vec3 _position);
 
 
@@ -42,6 +42,8 @@ public:
 	std::vector<Unit *> units;
 
 	virtual void update(Step * _step) override;
+	virtual void render(sweet::MatrixStack * _matrixStack, RenderOptions * _renderOptions) override;
+
 
 	MY_Scene_Main(Game * _game);
 	~MY_Scene_Main();

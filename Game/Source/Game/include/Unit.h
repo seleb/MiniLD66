@@ -2,16 +2,24 @@
 
 #include <MeshEntity.h>
 
+class MapCell;
+class Timeout;
+
 class Unit : public MeshEntity{
 public:
 	glm::vec3 currentPosition;
 	glm::vec3 targetPosition;
+
+	MapCell * cell;
 
 	// which team this unit is aligned with
 	int team;
 
 	float power;
 	bool canAttack;
+	bool canMove;
+
+	Timeout * moveTimeout, * attackTimeout;
 
 	Unit(int _team, glm::vec3 _position, Shader * _shader);
 	~Unit();
