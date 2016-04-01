@@ -7,8 +7,8 @@
  | (__| (_) || |) || _| | .` | / _ \  | |\/| || _|  _    |  _/   / _ \   \ \/\/ / | .` | 
   \___|\___/ |___/ |___||_|\_|/_/ \_\ |_|  |_||___|(_)   |_|    /_/ \_\   \_/\_/  |_|\_|
 
-Your populace has been comprimised by violent sleeper agents masquerading as regular civilians.
-Identify and neutralize all of the sleeper agents while minimizing civilian causalties.
+Your populace has been compromised by violent sleeper agents masquerading as regular civilians.
+Identify and neutralize all of the sleeper agents while minimizing civilian casualties.
 Regular civilians will always walk around others in their path; sleeper agents will usually just murder the obstacle.
 Assume direct control and order a single civilian to murder others for you.
 Civilians are invincible as long as you are controlling them.
