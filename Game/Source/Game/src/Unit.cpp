@@ -3,6 +3,8 @@
 #include <Unit.h>
 #include <MY_ResourceManager.h>
 #include <Timeout.h>
+#include <MY_Scene_Main.h>
+#include <NumberUtils.h>
 
 
 Unit::Unit(int _team, glm::vec3 _position, Shader * _shader) :
@@ -12,20 +14,35 @@ Unit::Unit(int _team, glm::vec3 _position, Shader * _shader) :
 	team(_team),
 	cell(nullptr),
 	canAttack(true),
-	canMove(true)
+	canMove(true),
+	power(0)
 {
-	mesh->pushTexture2D(MY_ResourceManager::globalAssets->getTexture("UNIT")->texture);
+	//mesh->pushTexture2D(MY_ResourceManager::globalAssets->getTexture("UNIT")->texture);
 	mesh->setScaleMode(GL_NEAREST);
 
-	moveTimeout = new Timeout(0.5f, [this](sweet::Event * _event){
+	moveTimeout = new Timeout(0.2f, [this](sweet::Event * _event){
 		canMove = true;
 	});
 	childTransform->addChild(moveTimeout, false);
 
-	attackTimeout = new Timeout(0.5f, [this](sweet::Event * _event){
+	attackTimeout = new Timeout(0.2f, [this](sweet::Event * _event){
 		canAttack = true;
 	});
 	childTransform->addChild(attackTimeout, false);
+
+	wanderTimeout = new Timeout(2.5f, [this](sweet::Event * _event){
+		waitTimeout->targetSeconds = sweet::NumberUtils::randomFloat(1.5, 5.f);
+		waitTimeout->restart();
+	});
+	childTransform->addChild(wanderTimeout, false);
+
+	waitTimeout = new Timeout(2.5f, [this](sweet::Event * _event){
+		targetPosition = glm::vec3(sweet::NumberUtils::randomInt(-SIZE/2+1, SIZE/2-2), 0, sweet::NumberUtils::randomInt(-SIZE/2+1, SIZE/2-2));
+		wanderTimeout->targetSeconds = sweet::NumberUtils::randomFloat(1.5, 5.f);
+		wanderTimeout->restart();
+	});
+	childTransform->addChild(waitTimeout, false);
+	waitTimeout->start();
 }
 
 Unit::~Unit(){

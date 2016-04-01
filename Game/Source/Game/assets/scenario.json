@@ -4,6 +4,16 @@
   		"type": "mesh",
   		"id": "UNIT",
   		"src": "unit.obj"
+  	},
+  	{
+  		"type": "mesh",
+  		"id": "PROPS",
+  		"src": "props.obj"
+  	},
+  	{
+  		"type": "mesh",
+  		"id": "BLOCK",
+  		"src": "block.obj"
   	}
   ]
 }

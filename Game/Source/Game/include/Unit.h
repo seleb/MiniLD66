@@ -19,7 +19,7 @@ public:
 	bool canAttack;
 	bool canMove;
 
-	Timeout * moveTimeout, * attackTimeout;
+	Timeout * moveTimeout, * attackTimeout, * wanderTimeout, * waitTimeout;
 
 	Unit(int _team, glm::vec3 _position, Shader * _shader);
 	~Unit();

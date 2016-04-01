@@ -7,6 +7,8 @@ class BulletDebugDrawer;
 class DirectionalLight;
 class Unit;
 
+#define SIZE 16
+
 class MapCell : public Node{
 public:
 	MapCell(glm::vec3 _position = glm::vec3(0));
@@ -16,6 +18,11 @@ public:
 
 class MY_Scene_Main : public MY_Scene_Base{
 public:
+	Shader * screenSurfaceShader;
+	RenderSurface * screenSurface;
+	StandardFrameBuffer * screenFBO;
+
+
 	// The scene's physics world
 	BulletWorld * bulletWorld;
 	// used to draw wireframes showing physics colliders, transforms, etc
@@ -39,6 +46,7 @@ public:
 	MeshEntity * cellHighlight;
 
 	OrthographicCamera * gameCam;
+	int camAngle;
 	std::vector<Unit *> units;
 
 	virtual void update(Step * _step) override;

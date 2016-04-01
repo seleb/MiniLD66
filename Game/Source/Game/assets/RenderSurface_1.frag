@@ -8,5 +8,20 @@ uniform sampler2D texFramebuffer;
 uniform float time = 0;
 
 void main() {
-    outColor = vec4(Texcoord.x + sin(time), Texcoord.y + cos(time), 0, 1);//vec4(texture(texFramebuffer, Texcoord));
+    outColor = vec4(texture(texFramebuffer, Texcoord));
+    float a = 0, b = 0;
+
+
+    a = 0.001;
+    b = -(sin(time)+1)*0.75f - 0.5;
+    outColor = mix(outColor, vec4(texture(texFramebuffer, Texcoord + vec2(a, -a))), b);
+    outColor = mix(outColor, vec4(texture(texFramebuffer, Texcoord + vec2(a, a))), b);
+    outColor = mix(outColor, vec4(texture(texFramebuffer, Texcoord + vec2(-a, a))), b);
+    outColor = mix(outColor, vec4(texture(texFramebuffer, Texcoord + vec2(-a, -a))), b);
+    a = -0.25;
+    b = -(abs(Texcoord.x-0.5) + abs(Texcoord.y-0.5))*0.1;
+    outColor = mix(outColor, vec4(texture(texFramebuffer, Texcoord + vec2(a, -a))), b);
+    outColor = mix(outColor, vec4(texture(texFramebuffer, Texcoord + vec2(a, a))), b);
+    outColor = mix(outColor, vec4(texture(texFramebuffer, Texcoord + vec2(-a, a))), b);
+    outColor = mix(outColor, vec4(texture(texFramebuffer, Texcoord + vec2(-a, -a))), b);
 }

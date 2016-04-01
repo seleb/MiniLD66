@@ -16,8 +16,11 @@
 #include <NodeBulletBody.h>
 #include <Unit.h>
 #include <RenderOptions.h>
+#include <RenderSurface.h>
+#include <StandardFrameBuffer.h>
 
-#define SIZE 32
+class RenderSurface;
+class StandardFrameBuffer;
 
 MapCell::MapCell(glm::vec3 _position) :
 	position(_position),
@@ -30,7 +33,11 @@ MY_Scene_Main::MY_Scene_Main(Game * _game) :
 	diffuseShader(new ComponentShaderBase(true)),
 	bulletWorld(new BulletWorld()),
 	bulletDebugDrawer(new BulletDebugDrawer(bulletWorld->world)),
-	selectedCell(nullptr)
+	selectedCell(nullptr),
+	camAngle(0),
+	screenSurfaceShader(new Shader("assets/RenderSurface_1", false, true)),
+	screenSurface(new RenderSurface(screenSurfaceShader, true)),
+	screenFBO(new StandardFrameBuffer(true))
 {
 	// Setup the debug drawer and add it to the scene
 	bulletWorld->world->setDebugDrawer(bulletDebugDrawer);
@@ -58,11 +65,11 @@ MY_Scene_Main::MY_Scene_Main(Game * _game) :
 
 
 	// TERRAIN
-	QuadMesh * cubeMesh = MeshFactory::getCubeMesh();
-	Transform t;
-	t.translate(0, 0.5f, 0, false);
-	cubeMesh->applyTransformation(&t);
-	MeshEntity * terrain = new MeshEntity(new QuadMesh(true), diffuseShader);
+	MeshEntity * terrain = new MeshEntity(new TriMesh(true), diffuseShader);
+
+	const TriMesh * const blockMesh = MY_ResourceManager::globalAssets->getMesh("BLOCK")->meshes.at(0);
+	const std::vector<TriMesh * > propsMeshes = MY_ResourceManager::globalAssets->getMesh("PROPS")->meshes;
+
 	childTransform->addChild(terrain);
 	for(signed long int x = 0; x < SIZE; ++x){
 		for(signed long int y = 0; y < SIZE; ++y){
@@ -70,9 +77,11 @@ MY_Scene_Main::MY_Scene_Main(Game * _game) :
 			//MeshEntity * me = new MeshEntity(cubeMesh, diffuseShader);
 			//terrain->addChild(me)->translate(x, 0, y)->scale(glm::vec3(1, sweet::NumberUtils::randomInt(1, 3)*0.33f, 1));
 
-			BulletMeshEntity * collider = new BulletMeshEntity(bulletWorld, MeshFactory::getCubeMesh(), diffuseShader);
+			BulletMeshEntity * collider = new BulletMeshEntity(bulletWorld, new TriMesh(true), diffuseShader);
+			collider->mesh->insertVertices(*blockMesh);
+
 			childTransform->addChild(collider);
-			collider->childTransform->translate(glm::vec3(cellPos.x, 0.5f, cellPos.z));
+			collider->childTransform->translate(glm::vec3(cellPos.x, 0.f, cellPos.z));
 			collider->freezeTransformation();
 			collider->setColliderAsBoundingBox();
 			collider->createRigidBody(0);
@@ -83,6 +92,17 @@ MY_Scene_Main::MY_Scene_Main(Game * _game) :
 				}
 				cellPos.y *= s;
 			}
+			
+			if(sweet::NumberUtils::randomFloat() > 0.9f){
+				MeshInterface * prop = new TriMesh(true);
+				prop->insertVertices(*sweet::NumberUtils::randomItem(propsMeshes));
+				Transform t;
+				t.translate(cellPos)->rotate(sweet::NumberUtils::randomInt(0, 4)/4.f * 360.f, 0, 1, 0, kOBJECT);
+				prop->applyTransformation(&t);
+				terrain->mesh->insertVertices(*prop);
+				delete prop;
+			}
+
 			colliderToCell[collider] = new MapCell(cellPos);
 			getCellFromPosition(cellPos) = colliderToCell[collider];
 
@@ -105,7 +125,7 @@ MY_Scene_Main::MY_Scene_Main(Game * _game) :
 	gameCam = new OrthographicCamera(-SIZE, SIZE, -SIZE/2, SIZE/2, -1000, 1000);
 	cameras.push_back(gameCam);
 	//gameCam->childTransform->addChild(new CameraController(c));
-	childTransform->addChild(gameCam);
+	childTransform->addChild(gameCam)->translate(glm::vec3(-0.5,0,-0.5));
 	activeCamera = gameCam;
 	gameCam->yaw = -45;
 	gameCam->pitch = -45;
@@ -135,6 +155,24 @@ MY_Scene_Main::~MY_Scene_Main(){
 }
 
 void MY_Scene_Main::update(Step * _step){
+	// camera controls
+	if(keyboard->keyJustDown(GLFW_KEY_A) || keyboard->keyJustDown(GLFW_KEY_LEFT) || mouse->getMouseWheelDelta() < -FLT_EPSILON){
+		--camAngle;
+		if(camAngle < 0){
+			camAngle = 3;
+			gameCam->yaw += 360.f;
+		}
+	}if(keyboard->keyJustDown(GLFW_KEY_D) || keyboard->keyJustDown(GLFW_KEY_RIGHT) || mouse->getMouseWheelDelta() > FLT_EPSILON){
+		++camAngle;
+		if(camAngle > 3){
+			camAngle = 0;
+			gameCam->yaw -= 360.f;
+		}
+	}
+	gameCam->yaw += ((camAngle/4.f*360.f + 45.f) - gameCam->yaw) * 0.1f;
+
+
+
 	glm::uvec2 sd = sweet::getWindowDimensions();
 	//gameCam->resize(0, sd.x, 0, sd.y);
 
@@ -221,6 +259,7 @@ void MY_Scene_Main::update(Step * _step){
 						u->canMove = false;
 						break;
 					}else{
+						// path blocked, try the other route
 						if(glm::abs(d.x) > glm::abs(d.z)){
 							movement.z += glm::sign(d.z);
 							movement.x -= glm::sign(d.x);
@@ -231,6 +270,10 @@ void MY_Scene_Main::update(Step * _step){
 						continue;
 					}
 				}while(++count <= 1);
+				
+				if(movement.x == 0 && movement.z == 0){
+					// path fully blocked
+				}
 			}
 		}
 	}
@@ -244,16 +287,57 @@ void MY_Scene_Main::update(Step * _step){
 	sun->childTransform->lookAt(glm::vec3(0));
 
 	sun->setIntensities(glm::vec3(glm::min(1.f, glm::sin(t) + 1.f), (glm::sin(t+15)+1)*0.5f, (glm::sin(t*2 + 15)+1)*0.4f+0.1f));
+
+
+
+
+
+	
+	// Screen shader update
+	// Screen shaders are typically loaded from a file instead of built using components, so to update their uniforms
+	// we need to use the OpenGL API calls
+
+	if(keyboard->keyJustDown(GLFW_KEY_L)){
+		screenSurfaceShader->unload();
+		screenSurfaceShader->loadFromFile(screenSurfaceShader->vertSource, screenSurfaceShader->fragSource);
+		screenSurfaceShader->load();
+	}
+
+	screenSurfaceShader->bindShader(); // remember that we have to bind the shader before it can be updated
+	GLint test = glGetUniformLocation(screenSurfaceShader->getProgramId(), "time");
+	checkForGlError(0);
+	if(test != -1){
+		glUniform1f(test, _step->time);
+		checkForGlError(0);
+	}
 }
 
 void MY_Scene_Main::render(sweet::MatrixStack * _matrixStack, RenderOptions * _renderOptions){
-	glm::vec3 v =sun->getIntensities();
+	glm::vec3 v =sun->getIntensities() * 0.5f;
 	_renderOptions->setClearColour(v.x, v.y, v.z, 1);
+
+	// keep our screen framebuffer up-to-date with the current viewport
+	screenFBO->resize(_renderOptions->viewPortDimensions.width, _renderOptions->viewPortDimensions.height);
+
+	// bind our screen framebuffer
+	FrameBufferInterface::pushFbo(screenFBO);
+	// render the scene
+	uiLayer->setVisible(false);
 	MY_Scene_Base::render(_matrixStack, _renderOptions);
+	uiLayer->setVisible(true);
+	// unbind our screen framebuffer, rebinding the previously bound framebuffer
+	// since we didn't have one bound before, this will be the default framebuffer (i.e. the one visible to the player)
+	FrameBufferInterface::popFbo();
+
+	// render our screen framebuffer using the standard render surface
+	screenSurface->render(screenFBO->getTextureId());
+
+	// render the uiLayer after the screen surface in order to avoid hiding it through shader code
+	uiLayer->render(_matrixStack, _renderOptions);
 }
 
 MapCell *& MY_Scene_Main::getCellFromPosition(glm::vec3 _position){
-	return positionToCell[std::make_pair(glm::round(_position.x), glm::round(_position.z))];
+	return positionToCell[std::make_pair(glm::floor(_position.x), glm::floor(_position.z))];
 }
 
 void MY_Scene_Main::enableDebug(){
