@@ -19,6 +19,7 @@
 #include <RenderSurface.h>
 #include <StandardFrameBuffer.h>
 #include <sweet/UI.h>
+#include <Easing.h>
 
 class RenderSurface;
 class StandardFrameBuffer;
@@ -192,6 +193,34 @@ MY_Scene_Main::MY_Scene_Main(Game * _game) :
 	eventManager->addEventListener("kill", [this](sweet::Event * _event){
 		kill(_event->getIntData("unit"));
 	});
+
+
+	fade = new NodeUI(uiLayer->world);
+	fade->setRationalHeight(1.f, uiLayer);
+	fade->setRationalWidth(1.f, uiLayer);
+	uiLayer->addChild(fade);
+	fade->setBackgroundColour(0,0,0, 1);
+
+	Timeout * fadeInTimer = new Timeout(1.f, [this](sweet::Event * _event){
+		fade->setVisible(false);
+	});
+	fadeInTimer->eventManager->addEventListener("progress", [this](sweet::Event * _event){
+		fade->setBackgroundColour(0,0,0, Easing::easeInOutCubic(_event->getFloatData("progress"), 1, -1, 1));
+	});
+	fadeInTimer->start();
+	childTransform->addChild(fadeInTimer);
+
+	fadeOutTimer = new Timeout(1.f, [this](sweet::Event * _event){
+		fade->setBackgroundColour(0,0,0, 0.5f);
+	});
+	fadeOutTimer->eventManager->addEventListener("start", [this](sweet::Event * _event){
+		fade->setBackgroundColour(0,0,0, 0);
+		fade->setVisible(true);
+	});
+	fadeOutTimer->eventManager->addEventListener("progress", [this](sweet::Event * _event){
+		fade->setBackgroundColour(0,0,0, Easing::easeInOutCubic(_event->getFloatData("progress"), 0, 0.5f, 1));
+	});
+	childTransform->addChild(fadeOutTimer);
 }
 
 MY_Scene_Main::~MY_Scene_Main(){	
@@ -225,6 +254,7 @@ void MY_Scene_Main::update(Step * _step){
 			win->verticalAlignment = kMIDDLE;
 			win->setText("YOU WIN");
 			gameOver = true;
+			fadeOutTimer->start();
 		}
 		if(numFriendlies == 0){
 			TextLabel * lose = new TextLabel(uiLayer->world, MY_ResourceManager::globalAssets->getFont("FONT-BIG")->font, textShader);
@@ -235,6 +265,7 @@ void MY_Scene_Main::update(Step * _step){
 			lose->verticalAlignment = kMIDDLE;
 			lose->setText("YOU LOSE");
 			gameOver = true;
+			fadeOutTimer->start();
 		}
 	}
 
