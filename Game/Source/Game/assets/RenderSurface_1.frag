@@ -24,4 +24,7 @@ void main() {
     outColor = mix(outColor, vec4(texture(texFramebuffer, Texcoord + vec2(a, a))), b);
     outColor = mix(outColor, vec4(texture(texFramebuffer, Texcoord + vec2(-a, a))), b);
     outColor = mix(outColor, vec4(texture(texFramebuffer, Texcoord + vec2(-a, -a))), b);
+
+    outColor *= (fract(Texcoord.y*time) > 0.01) ? 1 : 1.1;
+    outColor *= ( (mod(Texcoord.x, fract(outColor.r+cos(time*0.1)))) < 0.01 ) ? 1.05 : 1;
 }
