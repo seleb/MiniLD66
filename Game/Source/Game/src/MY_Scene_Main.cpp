@@ -34,6 +34,7 @@ MY_Scene_Main::MY_Scene_Main(Game * _game) :
 	bulletWorld(new BulletWorld()),
 	bulletDebugDrawer(new BulletDebugDrawer(bulletWorld->world)),
 	selectedCell(nullptr),
+	selectedUnit(nullptr),
 	camAngle(0),
 	screenSurfaceShader(new Shader("assets/RenderSurface_1", false, true)),
 	screenSurface(new RenderSurface(screenSurfaceShader, true)),
@@ -220,9 +221,22 @@ void MY_Scene_Main::update(Step * _step){
 		if(mouse->leftJustPressed()){
 			MapCell * cell = colliderToCell[selectedCell];
 
+			// de-select current unit
+			if(selectedUnit != nullptr){
+				selectedUnit->setShader(diffuseShader, false);
+				selectedUnit->waitTimeout->restart();
+			}
+			
 			// select the unit in the cell
 			selectedUnit = cell->unit;
+			if(selectedUnit != nullptr){
+				selectedUnit->setShader(baseShader, false);
+				selectedUnit->waitTimeout->stop();
+				selectedUnit->wanderTimeout->stop();
+			}
 		}else if(mouse->rightJustPressed()){
+
+			// move unit
 			MapCell * cell = colliderToCell[selectedCell];
 			
 			if(selectedUnit != nullptr){
