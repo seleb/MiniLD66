@@ -414,6 +414,9 @@ void MY_Scene_Main::kill(int _unitId){
 	units.erase(_unitId);
 	u->cell->unit = nullptr;
 	u->firstParent()->firstParent()->removeChild(u->firstParent());
+	if(u == selectedUnit){
+		selectedUnit = nullptr;
+	}
 	delete u->firstParent();
 }
 

@@ -43,6 +43,7 @@ Unit::Unit(int _team, glm::vec3 _position, Shader * _shader) :
 	});
 	childTransform->addChild(waitTimeout, false);
 	waitTimeout->start();
+	waitTimeout->trigger();
 }
 
 Unit::~Unit(){
