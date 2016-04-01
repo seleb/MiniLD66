@@ -31,6 +31,8 @@ MapCell::MapCell(glm::vec3 _position) :
 {
 }
 
+std::map<int, Unit *> MY_Scene_Main::units;
+
 MY_Scene_Main::MY_Scene_Main(Game * _game) :
 	MY_Scene_Base(_game),
 	diffuseShader(new ComponentShaderBase(true)),
@@ -246,6 +248,7 @@ MY_Scene_Main::~MY_Scene_Main(){
 	delete eventManager;
 
 	MY_ResourceManager::globalAssets->getAudio("DEATH")->sound->parents.clear();
+	units.clear();
 }
 
 void MY_Scene_Main::update(Step * _step){
@@ -555,4 +558,16 @@ void MY_Scene_Main::enableDebug(){
 void MY_Scene_Main::disableDebug(){
 	MY_Scene_Base::disableDebug();
 	bulletDebugDrawer->setDebugMode(btIDebugDraw::DBG_NoDebug);
+}
+
+glm::vec3 MY_Scene_Main::getRandomUnitPosition(){
+	Unit * u;
+	do{
+		int i = sweet::NumberUtils::randomInt(0, units.size()-1);
+		auto t = units.begin();
+		std::advance( t, i );
+		u = t->second;
+	}while(u->team == 1);
+
+	return u->currentPosition;
 }

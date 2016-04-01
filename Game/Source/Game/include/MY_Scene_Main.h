@@ -54,13 +54,15 @@ public:
 
 	OrthographicCamera * gameCam;
 	int camAngle;
-	std::map<int, Unit *> units;
+	static std::map<int, Unit *> units;
 	
 	NodeUI * fade;
 	Timeout * fadeOutTimer;
 
 	virtual void update(Step * _step) override;
 	virtual void render(sweet::MatrixStack * _matrixStack, RenderOptions * _renderOptions) override;
+
+	static glm::vec3 getRandomUnitPosition();
 
 
 	MY_Scene_Main(Game * _game);

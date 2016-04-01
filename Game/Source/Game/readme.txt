@@ -21,7 +21,7 @@ Civilians are invincible as long as you are controlling them.
 
 Left mouse button to select/de-select units.
 Right mouse button to move selected units.
-A+D or LEFT+RIGHT to rotate view.
+A+D, LEFT+RIGHT, or mouse scrollwheel to rotate view.
 
 //////////
 // TIPS //

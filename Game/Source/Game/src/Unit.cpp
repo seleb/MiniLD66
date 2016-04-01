@@ -33,19 +33,22 @@ Unit::Unit(int _team, glm::vec3 _position, Shader * _shader) :
 	childTransform->addChild(wanderTimeout, false);
 
 	waitTimeout = new Timeout(2.5f, [this](sweet::Event * _event){
-		targetPosition = glm::vec3(sweet::NumberUtils::randomInt(-SIZE/2+1, SIZE/2-2), 0, sweet::NumberUtils::randomInt(-SIZE/2+1, SIZE/2-2));
-		wanderTimeout->targetSeconds = sweet::NumberUtils::randomFloat(1.5, 10.f);
+		if(team == 0){
+			targetPosition = glm::vec3(sweet::NumberUtils::randomInt(-SIZE/2+1, SIZE/2-2), 0, sweet::NumberUtils::randomInt(-SIZE/2+1, SIZE/2-2));
+		}else{
+			targetPosition = MY_Scene_Main::getRandomUnitPosition();
+		}wanderTimeout->targetSeconds = sweet::NumberUtils::randomFloat(1.5, 10.f);
 		wanderTimeout->restart();
 	});
 	childTransform->addChild(waitTimeout, false);
 	waitTimeout->start();
 	waitTimeout->trigger();
 
-	killTimeout = new Timeout(0.5f, [this](sweet::Event * _event){
+	killTimeout = new Timeout(1.f, [this](sweet::Event * _event){
 		killTime = 0;
 	});
 	killTimeout->eventManager->addEventListener("progress", [this](sweet::Event * _event){
-		killTime = Easing::easeInOutCubic(_event->getFloatData("progress"), 1, -1, 1);
+		killTime = Easing::easeInCubic(_event->getFloatData("progress"), 1, -1, 1);
 	});
 	childTransform->addChild(killTimeout, false);
 }
