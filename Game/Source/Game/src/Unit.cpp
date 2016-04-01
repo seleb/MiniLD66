@@ -31,14 +31,14 @@ Unit::Unit(int _team, glm::vec3 _position, Shader * _shader) :
 	childTransform->addChild(attackTimeout, false);
 
 	wanderTimeout = new Timeout(2.5f, [this](sweet::Event * _event){
-		waitTimeout->targetSeconds = sweet::NumberUtils::randomFloat(1.5, 5.f);
+		waitTimeout->targetSeconds = sweet::NumberUtils::randomFloat(1.5, 10.f);
 		waitTimeout->restart();
 	});
 	childTransform->addChild(wanderTimeout, false);
 
 	waitTimeout = new Timeout(2.5f, [this](sweet::Event * _event){
 		targetPosition = glm::vec3(sweet::NumberUtils::randomInt(-SIZE/2+1, SIZE/2-2), 0, sweet::NumberUtils::randomInt(-SIZE/2+1, SIZE/2-2));
-		wanderTimeout->targetSeconds = sweet::NumberUtils::randomFloat(1.5, 5.f);
+		wanderTimeout->targetSeconds = sweet::NumberUtils::randomFloat(1.5, 10.f);
 		wanderTimeout->restart();
 	});
 	childTransform->addChild(waitTimeout, false);

@@ -41,6 +41,11 @@ MY_Scene_Main::MY_Scene_Main(Game * _game) :
 	screenFBO(new StandardFrameBuffer(true)),
 	sunTime(0)
 {
+	// memory management
+	screenSurface->incrementReferenceCount();
+	screenSurfaceShader->incrementReferenceCount();
+	screenFBO->incrementReferenceCount();
+
 	// Setup the debug drawer and add it to the scene
 	bulletWorld->world->setDebugDrawer(bulletDebugDrawer);
 	childTransform->addChild(bulletDebugDrawer, false);
@@ -116,7 +121,7 @@ MY_Scene_Main::MY_Scene_Main(Game * _game) :
 
 
 			// spawn unit here
-			if(sweet::NumberUtils::randomFloat() > 0.9f){
+			if(sweet::NumberUtils::randomFloat() > 0.95f){
 				Unit * u = new Unit(0, cellPos, diffuseShader);
 				units.push_back(u);
 				cell->unit = u;
@@ -157,6 +162,11 @@ MY_Scene_Main::~MY_Scene_Main(){
 	for(auto m : colliderToCell){
 		delete m.second;
 	}
+	
+	// memory management
+	screenSurface->decrementAndDelete();
+	screenSurfaceShader->decrementAndDelete();
+	screenFBO->decrementAndDelete();
 }
 
 void MY_Scene_Main::update(Step * _step){
