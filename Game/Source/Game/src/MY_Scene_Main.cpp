@@ -58,12 +58,12 @@ MY_Scene_Main::MY_Scene_Main(Game * _game) :
 	childTransform->addChild(sun);
 	lights.push_back(sun);
 
-	PointLight * pl = new PointLight(glm::vec3(0.1f), 0, 0.005f, -1);
+	PointLight * pl = new PointLight(glm::vec3(0.2f), 0, 0.05f, -1);
 	sun->firstParent()->addChild(pl, false);
 	lights.push_back(pl);
 
 	// add a cube to the light too so that we can see it without having to use the debug mode
-	sun->childTransform->addChild(new MeshEntity(MeshFactory::getCubeMesh(), baseShader),false);
+	sun->childTransform->addChild(new MeshEntity(MeshFactory::getCubeMesh(0.125), baseShader),false);
 
 
 	// TERRAIN
@@ -87,6 +87,8 @@ MY_Scene_Main::MY_Scene_Main(Game * _game) :
 			collider->freezeTransformation();
 			collider->setColliderAsBoundingBox();
 			collider->createRigidBody(0);
+
+			// lower terrain here
 			if(sweet::NumberUtils::randomFloat() > 0.75f){
 				float s = sweet::NumberUtils::randomInt(1, 2)*0.33f;
 				for(auto & v : collider->mesh->vertices){
@@ -95,6 +97,7 @@ MY_Scene_Main::MY_Scene_Main(Game * _game) :
 				cellPos.y *= s;
 			}
 			
+			// insert prop here
 			if(sweet::NumberUtils::randomFloat() > 0.9f){
 				MeshInterface * prop = new TriMesh(true);
 				prop->insertVertices(*sweet::NumberUtils::randomItem(propsMeshes));
@@ -105,22 +108,22 @@ MY_Scene_Main::MY_Scene_Main(Game * _game) :
 				delete prop;
 			}
 
-			colliderToCell[collider] = new MapCell(cellPos);
-			getCellFromPosition(cellPos) = colliderToCell[collider];
+			MapCell * cell = new MapCell(cellPos);
+			getCellFromPosition(cellPos) = colliderToCell[collider] = cell;
 
 			terrain->mesh->insertVertices(*collider->mesh);
 			collider->firstParent()->setVisible(false);
-		}
-	}
 
-	
-	units.push_back(new Unit(0, glm::vec3(1, 1, 3), diffuseShader));
-	units.push_back(new Unit(0, glm::vec3(2, 1, 3), diffuseShader));
-	units.push_back(new Unit(0, glm::vec3(3, 1, 4), diffuseShader));
-	for(Unit * u : units){
-		getCellFromPosition(u->currentPosition)->unit = u;
-		u->cell = getCellFromPosition(u->currentPosition);
-		childTransform->addChild(u);
+
+			// spawn unit here
+			if(sweet::NumberUtils::randomFloat() > 0.9f){
+				Unit * u = new Unit(0, cellPos, diffuseShader);
+				units.push_back(u);
+				cell->unit = u;
+				u->cell = cell;
+				childTransform->addChild(u);
+			}
+		}
 	}
 
 	// CAMERA
@@ -298,7 +301,7 @@ void MY_Scene_Main::update(Step * _step){
 	// update light position to make it orbit around the scene
 	float r = SIZE/2;
 	sunTime += _step->deltaTime*0.25f;
-	sun->firstParent()->translate(glm::vec3(sin(sunTime) * r, 0, cos(sunTime) * r) + glm::vec3(0, 3, 0), false);
+	sun->firstParent()->translate(glm::vec3(sin(sunTime) * r, 0, cos(sunTime) * r) + glm::vec3(0, 4, 0), false);
 	sun->childTransform->lookAt(glm::vec3(0));
 
 	sun->setIntensities(glm::vec3(glm::min(1.f, glm::sin(sunTime) + 1.f), (glm::sin(sunTime+15)+1)*0.5f, (glm::sin(sunTime*2 + 15)+1)*0.4f+0.1f));
@@ -339,7 +342,6 @@ void MY_Scene_Main::render(sweet::MatrixStack * _matrixStack, RenderOptions * _r
 	// render the scene
 	uiLayer->setVisible(false);
 	MY_Scene_Base::render(_matrixStack, _renderOptions);
-	uiLayer->setVisible(true);
 	// unbind our screen framebuffer, rebinding the previously bound framebuffer
 	// since we didn't have one bound before, this will be the default framebuffer (i.e. the one visible to the player)
 	FrameBufferInterface::popFbo();
@@ -348,6 +350,7 @@ void MY_Scene_Main::render(sweet::MatrixStack * _matrixStack, RenderOptions * _r
 	screenSurface->render(screenFBO->getTextureId());
 
 	// render the uiLayer after the screen surface in order to avoid hiding it through shader code
+	uiLayer->setVisible(true);
 	uiLayer->render(_matrixStack, _renderOptions);
 }
 
