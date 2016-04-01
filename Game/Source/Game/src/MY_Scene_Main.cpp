@@ -306,11 +306,19 @@ void MY_Scene_Main::update(Step * _step){
 					}else{
 						// path blocked
 
-						if(u != targetCell->unit && u->team == 1 && u->canAttack){
-							// i'm a baddie, so just straight murder em
-							u->canAttack = false;
-							u->attackTimeout->restart();
+						if(
+							u != targetCell->unit // don't kill yourself
+							&& (u->team == 1 || u == selectedUnit)// you're a baddie OR you're the selected unit
+							&& u->canAttack // you can attack
+							&& targetCell->unit != selectedUnit // selected unit is invincible
+						){
+							// baddies have to wait a bit before they attack again
+							if(u == selectedUnit){
+								u->canAttack = false;
+								u->attackTimeout->restart();
+							}
 
+							// just straight murder em
 							sweet::Event * e = new sweet::Event("kill");
 							e->setIntData("unit", targetCell->unit->id);
 							eventManager->triggerEvent(e);
@@ -410,14 +418,17 @@ void MY_Scene_Main::kill(Unit * _unit){
 }
 	
 void MY_Scene_Main::kill(int _unitId){
-	Unit * u = units.at(_unitId);
-	units.erase(_unitId);
-	u->cell->unit = nullptr;
-	u->firstParent()->firstParent()->removeChild(u->firstParent());
-	if(u == selectedUnit){
-		selectedUnit = nullptr;
+	auto it = units.find(_unitId);
+	if(it != units.end()){
+		Unit * u = it->second;
+		units.erase(_unitId);
+		u->cell->unit = nullptr;
+		u->firstParent()->firstParent()->removeChild(u->firstParent());
+		if(u == selectedUnit){
+			selectedUnit = nullptr;
+		}
+		delete u->firstParent();
 	}
-	delete u->firstParent();
 }
 
 void MY_Scene_Main::enableDebug(){

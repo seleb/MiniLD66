@@ -1,6 +1,13 @@
 {
   "assets": [
   	{
+  		"type": "font",
+  		"id": "FONT",
+  		"src": "Fixedsys500c.ttf",
+  		"antiAliased": false,
+  		"size": "8pt"
+  	},
+  	{
   		"type": "mesh",
   		"id": "UNIT-GOOD",
   		"src": "unit.obj"
