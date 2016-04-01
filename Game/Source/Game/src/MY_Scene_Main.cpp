@@ -144,9 +144,10 @@ MY_Scene_Main::MY_Scene_Main(Game * _game) :
 
 	uiLayer->addMouseIndicator();
 
-	cellHighlight = new MeshEntity(MeshFactory::getCubeMesh(), baseShader);
-	cellHighlight->childTransform->scale(glm::vec3(1, 0.1f, 1));
-	childTransform->addChild(cellHighlight);
+	cellHighlight = new MeshEntity(MeshFactory::getPlaneMesh(), baseShader);
+	childTransform->addChild(cellHighlight)->rotate(90, 1, 0, 0, kOBJECT);
+	cellHighlight->mesh->setScaleMode(GL_NEAREST);
+	cellHighlight->mesh->pushTexture2D(MY_ResourceManager::globalAssets->getTexture("HIGHLIGHT")->texture);
 
 
 	bulletWorld->update(&sweet::step);
